@@ -1,16 +1,47 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.Sqlite;
 
 namespace WebPhotos.Controllers
 {
     [Route("TestController")]
     public class TestController : Controller
     {
+        private List<string> sqlConncet()
+        {
+            List<string> sql = new List<string>();
+
+            string sqlExpression = "SELECT * FROM testTable";
+            string conn = "Data Source=testDB.db";
+            using (var connection = new SqliteConnection(conn))
+            {
+                connection.Open();
+                SqliteCommand command = new SqliteCommand(sqlExpression, connection);
+                using (SqliteDataReader reader = command.ExecuteReader())
+                {
+                    if (reader.HasRows) 
+                    {
+                        while (reader.Read())   
+                        {
+                            sql.Add(reader.GetString(0));
+                            sql.Add(reader.GetString(1));
+                            var id = reader.GetValue(0);
+                            var path = reader.GetValue(1);
+                        }
+                    }
+                }
+            }
+            return sql;
+        }
+
+
         [HttpGet]
         [Route("Test")]
-        public ContentResult TestMethod()
+        public ActionResult TestMethod()
         {
-            return Content("ok");
+            List<string> strings= sqlConncet();
+            return base.File("/Images/" + strings[1], "image/jpeg");
         }
 
         // GET: TestController
